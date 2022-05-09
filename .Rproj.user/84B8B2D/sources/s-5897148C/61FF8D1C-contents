@@ -6,4 +6,50 @@ https://github.com/scotthawes/r4blog.git
 UA-228150820-1
 
 
-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
+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
+
+
+
+install.packages("googleAnalyticsR")
+install.packages("googleAuthR")
+install.packages("leaflet")
+
+# R packages
+library(googleAnalyticsR)
+library(googleAuthR)
+library(dplyr)
+library(leaflet)
+
+# Authenticate your Google Analytics account
+ga_auth()
+
+# List your Google Analytics accounts
+ga_accounts <- ga_account_list()
+
+# # Obtain the "view Id" associated with your website account
+view_id <- ga_accounts %>%
+  filter(accountName == "abndistro", webPropertyName == "Abnormal Distributions") %>%
+  pull(viewId)
+
+# Query geographic location of website users
+users_location <- google_analytics(
+  viewId = "198103217",
+  date_range = c("2019-01-01", "2020-12-31"),
+  metrics = "users",
+  dimensions = c("latitude", "longitude"),
+  anti_sample = T
+) %>%
+  as_tibble() %>%
+  mutate_at(vars(latitude, longitude), list(as.numeric))
+
+# Plot map of website users by location
+map_plot <- users_location %>%
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~longitude,
+    lat = ~latitude,
+    radius = ~log(users),
+    stroke = FALSE,
+    fillOpacity = 0.5
+  )
